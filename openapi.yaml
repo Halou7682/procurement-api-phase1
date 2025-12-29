@@ -1,0 +1,367 @@
+openapi: 3.1.0
+
+info:
+  title: AI 原生 ERP - 采购模块 API（Phase 1 锁定版）
+  description: |
+    本 API 定义用于支持义乌小商品采购场景下的采购订单数字化、
+    AI 提取 + 人工确认、审计追溯。
+
+    【Phase 1 原则】
+    - AI 仅做“提取 + 建议”，不做最终判断
+    - 人工确认是强制流程的一部分
+    - 允许数据不完整（partial）
+    - 原始资料不可变、仅用于审计与复核
+  version: "1.0.0"
+  x-phase: 1
+  x-governance:
+    human_in_the_loop: mandatory
+    audit_first: true
+    ai_is_assistant: true
+
+servers:
+  - url: https://api.example.com
+    description: Phase 1 示例服务器
+
+tags:
+  - name: ProcurementOrder
+    description: 采购订单
+  - name: AIExtraction
+    description: AI 提取与人工确认
+  - name: SourceMaterial
+    description: 原始资料
+  - name: Supplier
+    description: 供应商
+
+paths:
+
+  /procurement-orders:
+    post:
+      tags: [ProcurementOrder]
+      summary: 创建采购订单（待人工确认）
+      x-human-confirm-required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcurementOrderCreateRequest'
+      responses:
+        "201":
+          description: 采购订单已创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcurementOrder'
+
+    get:
+      tags: [ProcurementOrder]
+      summary: 查询采购订单列表
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending_confirmation, confirmed, closed]
+        - name: supplierName
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 订单列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcurementOrder'
+
+  /procurement-orders/{orderId}:
+    get:
+      tags: [ProcurementOrder]
+      summary: 获取采购订单详情
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 订单详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcurementOrder'
+
+  /ai/extraction/jobs:
+    post:
+      tags: [AIExtraction]
+      summary: 创建 AI 提取任务
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AIExtractionJobCreate'
+      responses:
+        "202":
+          description: 提取任务已创建
+
+  /ai/extraction/jobs/{jobId}/result:
+    get:
+      tags: [AIExtraction]
+      summary: 获取 AI 提取结果
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI 提取结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractedProcurementOrder'
+
+  /review/procurement-orders/{extractedOrderId}/confirm:
+    post:
+      tags: [AIExtraction]
+      summary: 人工确认采购订单
+      parameters:
+        - name: extractedOrderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmedProcurementOrderInput'
+      responses:
+        "201":
+          description: 已生成正式采购订单
+
+  /source-materials:
+    post:
+      tags: [SourceMaterial]
+      summary: 上传原始资料
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SourceMaterialUpload'
+      responses:
+        "201":
+          description: 原始资料已保存
+
+  /source-materials/{sourceMaterialId}:
+    get:
+      tags: [SourceMaterial]
+      summary: 获取原始资料
+      parameters:
+        - name: sourceMaterialId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 原始资料信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceMaterial'
+
+  /suppliers:
+    post:
+      tags: [Supplier]
+      summary: 创建供应商
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreateInput'
+      responses:
+        "201":
+          description: 供应商已创建
+
+  /suppliers/{supplierId}:
+    get:
+      tags: [Supplier]
+      summary: 获取供应商信息
+      parameters:
+        - name: supplierId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 供应商信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+
+components:
+  schemas:
+
+    ProcurementOrderCreateRequest:
+      type: object
+      required: [sourceMaterialId]
+      properties:
+        sourceMaterialId:
+          type: string
+        aiExtractedData:
+          $ref: '#/components/schemas/ProcurementOrderAIExtractedData'
+
+    ProcurementOrder:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [draft, pending_confirmation, confirmed, closed]
+        supplierId:
+          type: string
+          nullable: true
+        supplierName:
+          type: string
+        totalAmount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        sourceMaterialIds:
+          type: array
+          items:
+            type: string
+
+    ProcurementOrderAIExtractedData:
+      type: object
+      properties:
+        rawText:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/AIExtractedField'
+
+    AIExtractedField:
+      type: object
+      properties:
+        value:
+          type: string
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    AIExtractionJobCreate:
+      type: object
+      required: [sourceMaterialId]
+      properties:
+        sourceMaterialId:
+          type: string
+        hintSupplierId:
+          type: string
+          nullable: true
+
+    ExtractedProcurementOrder:
+      type: object
+      properties:
+        extractedOrderId:
+          type: string
+        extractedData:
+          $ref: '#/components/schemas/ProcurementOrderAIExtractedData'
+        confidenceSummary:
+          type: object
+
+    ConfirmedProcurementOrderInput:
+      type: object
+      required: [supplierName, items]
+      properties:
+        supplierName:
+          type: string
+        supplierId:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfirmedOrderItem'
+
+    ConfirmedOrderItem:
+      type: object
+      required: [name, quantity]
+      properties:
+        name:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+          nullable: true
+
+    SourceMaterialUpload:
+      type: object
+      required: [file, sourceType]
+      properties:
+        file:
+          type: string
+          format: binary
+        sourceType:
+          type: string
+          enum: [photo, excel, pdf, chat_record, email_attachment]
+        note:
+          type: string
+          nullable: true
+
+    SourceMaterial:
+      type: object
+      required: [id, sourceType, uploadedAt]
+      properties:
+        id:
+          type: string
+        sourceType:
+          type: string
+        fileUrl:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+
+    Supplier:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        aliasNames:
+          type: array
+          items:
+            type: string
+
+    SupplierCreateInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        aliasNames:
+          type: array
+          items:
+            type: string
+
+
