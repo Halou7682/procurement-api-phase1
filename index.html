@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <title>AI 原生 ERP · 采购模块 API（Phase 1 冻结版）</title>
-  <!-- 使用最新稳定 CDN，永不过期 -->
   <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css" />
   <style>
     body { margin: 0; padding: 0; }
@@ -12,15 +11,12 @@
 </head>
 <body>
   <div id="swagger-ui"></div>
-
   <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js" crossorigin></script>
   <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-standalone-preset.js" crossorigin></script>
-
   <script>
     window.onload = function () {
       SwaggerUIBundle({
-        // 使用绝对路径，确保在 GitHub Pages 项目仓库下能正确加载
-        url: "/procurement-api-phase1/openapi.yaml",
+        url: "/procurement-api-phase1/openapi.yaml", 
         dom_id: "#swagger-ui",
         presets: [
           SwaggerUIBundle.presets.apis,
