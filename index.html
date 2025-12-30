@@ -4,28 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <title>AI 原生 ERP · 采购模块 API（Phase 1 冻结版）</title>
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
   <style>
-    body { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; height: 100vh; }
   </style>
 </head>
 <body>
-  <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js" crossorigin></script>
-  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-standalone-preset.js" crossorigin></script>
+  <redoc spec-url="openapi.yaml"></redoc>
   <script>
-    window.onload = function () {
-      SwaggerUIBundle({
-        url: "/procurement-api-phase1/openapi.yaml", 
-        dom_id: "#swagger-ui",
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        layout: "BaseLayout",
-        deepLinking: true
-      });
-    };
+    Redoc.init();
   </script>
 </body>
 </html>
