@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/procurement-api-phase1/openapi.yaml",
+      "destination": "/openapi.yaml"
+    }
+  ]
+}
