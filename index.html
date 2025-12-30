@@ -4,18 +4,32 @@
 <head>
   <meta charset="UTF-8">
   <title>AI 原生 ERP · 采购模块 API（Phase 1 冻结版）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Redoc 最新版 CDN，完全支持 OpenAPI 3.1.0 -->
-  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <!-- 使用最新稳定 CDN，永不过期 -->
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@latest/swagger-ui.css" />
   <style>
-    body { margin: 0; padding: 0; height: 100vh; }
+    body { margin: 0; padding: 0; }
   </style>
 </head>
 <body>
-  <!-- 直接加载根目录下的 openapi.yaml -->
-  <redoc spec-url="openapi.yaml"></redoc>
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-bundle.js" crossorigin></script>
+  <script src="https://unpkg.com/swagger-ui-dist@latest/swagger-ui-standalone-preset.js" crossorigin></script>
+
   <script>
-    Redoc.init();
+    window.onload = function () {
+      SwaggerUIBundle({
+        // 使用绝对路径，确保在 GitHub Pages 项目仓库下能正确加载
+        url: "/procurement-api-phase1/openapi.yaml",
+        dom_id: "#swagger-ui",
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        deepLinking: true
+      });
+    };
   </script>
 </body>
 </html>
